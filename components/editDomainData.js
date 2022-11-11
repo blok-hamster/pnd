@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { config } from "../constants/index";
-import sbtDomainABi from "../constance/sbtDomainAbi.json";
+//import sbtDomainABi from "../constance/sbtDomainAbi.json";
 import domainAbi from "../constance/picardyDomainAbi.json";
 import { useState, useEffect } from "react";
 import dotenv from "dotenv";
@@ -14,18 +14,18 @@ export default function EditDomainDetails(tld) {
   const [sbtFactory, setSbtFactory] = useState(null);
   const [domainFactory, setDomainFactory] = useState(null);
   const [tlds, setTlds] = useState([]);
-  const [sbtTlds, setSbtTlds] = useState([]);
+  //const [sbtTlds, setSbtTlds] = useState([]);
 
   //gets all the created domains and sbtDomain names and stores in an array
   useEffect(async () => {
     const provider = new ethers.providers.JsonRpcProvider(
       process.env.POLYGON_MUMBAI_ENDPOINT
     );
-    const newSbtFactory = new ethers.Contract(
-      config.sbtFactoryAddress,
-      sbtDomainFactoryABi,
-      provider
-    );
+    // const newSbtFactory = new ethers.Contract(
+    //   config.sbtFactoryAddress,
+    //   sbtDomainFactoryABi,
+    //   provider
+    // );
     setSbtFactory(newSbtFactory);
     const newDomainFactory = new ethers.Contract(
       config.domainFactoryAddress,
@@ -34,9 +34,9 @@ export default function EditDomainDetails(tld) {
     );
     setDomainFactory(newDomainFactory);
 
-    const sbtAddresses = await newSbtFactory.getTldsArray().then((res) => {
-      setSbtTlds(res);
-    });
+    // const sbtAddresses = await newSbtFactory.getTldsArray().then((res) => {
+    //   setSbtTlds(res);
+    // });
 
     const tldAddresses = await newDomainFactory.getTldsArray().then((res) => {
       setTlds(res);
