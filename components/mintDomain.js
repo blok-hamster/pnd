@@ -9,7 +9,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // This component mints the different types of domain
-export default function MintDomains() {
+export default function MintDomains(tld) {
   const [deafultAddress, setDeafultAddress] = useState(null);
   const [signer, setSigner] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -77,13 +77,12 @@ export default function MintDomains() {
     event.preventDeafult();
 
     const name = event.target.name;
-    const sbtTld = event.target.tld;
     const soulWallet = event.target.soulWallet;
-    const tldAddress = await sbtFactory.tldNamesAddresses(sbtTld);
+    const tldAddress = await sbtFactory.tldNamesAddresses(tld);
 
     const sbtDomainContract = new ethers.Contract(
       tldAddress,
-      sbtDoaminAbi,
+      sbtDomainABi,
       signer
     );
     const mint = await sbtDomainContract.mint(name, soulWallet);
@@ -95,12 +94,11 @@ export default function MintDomains() {
   const mintDomain = async (event) => {
     event.preventDeafult();
 
-    const name = event.target.name;
-    const tld = event.target.tld;
+    const name = event.target.name.value;
     const tldAddress = await domainFactory.tldNamesAddresses(tld);
 
     const domainContract = new ethers.Contract(tldAddress, domainAbi, signer);
-    const mint = await sbtDomainContract.mint(name, deafultAddress);
+    const mint = await domainContract.mint(name, deafultAddress);
     const recipt = await mint.wait();
     const txHash = await recipt.hash;
   };

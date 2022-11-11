@@ -11,6 +11,8 @@ export default function CreateDomain() {
   const [signer, setSigner] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [userBalance, setUserBalance] = useState(null);
+  const [domainAddress, setDomainAddress] = useState(null);
+  const [sbtAddress, setSbtAddress] = useState(null);
 
   const connectwalletHandler = () => {
     if (window.Ethereum) {
@@ -49,15 +51,14 @@ export default function CreateDomain() {
       sbtDomainFactoryABi,
       signer
     );
-    const createSbtDoamin = await sbtFactory.createTld(
+    const { 0: sbtAddress } = await sbtFactory.createTld(
       tldName,
       symbol,
       deafultAddress,
       price,
       buyingEnabled
     );
-    const recipt = await createSbtDoamin.wait();
-    const hash = await recipt.hash;
+    setSbtAddress(sbtAddress);
   };
 
   const createDomain = async (event) => {
@@ -72,15 +73,14 @@ export default function CreateDomain() {
       picardyDomainFactoryABi,
       signer
     );
-    const createPicardyDomain = await domainFactory.createTld(
+    const { 0: domainAddress } = await domainFactory.createTld(
       tldName,
       symbol,
       deafultAddress,
       price,
       buyingEnabled
     );
-    const recipt = await createPicardyDomain.wait();
-    const hash = await recipt.hash;
+    setDomainAddress(domainAddress);
   };
 
   return <div></div>;
