@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import dotenv from "dotenv";
 dotenv.config();
 
-export default function EditDomainDetails() {
+export default function EditDomainDetails(tld) {
   const [deafultAddress, setDeafultAddress] = useState(null);
   const [signer, setSigner] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -70,10 +70,15 @@ export default function EditDomainDetails() {
   };
 
   const data = () => {
-    return {
-      fields: [],
-      tldContract: null,
+    const data = {
+      instagram: "",
+      twitter: "",
+      telegram: "",
+      url: "",
+      description: "",
     };
+
+    return data;
   };
 
   //Data should be an object, and would be stringified to parse tothe contract
@@ -81,14 +86,25 @@ export default function EditDomainDetails() {
   const editData = async (event) => {
     event.preventDeafult();
 
-    const data = event.target.data;
-    const domainName = event.target.domainName;
+    const domainName = event.target.domainName.value;
+    const instagram = event.target.instagram.value;
+    const twitter = event.target.twitter.value;
+    const telegram = event.target.telegram.value;
+    const url = event.target.url.value;
+
+    let newData = data();
+    newData.instagram = instagram;
+    newData.twitter = twitter;
+    newData.telegram = telegram;
+    newData.url = url;
 
     // Stringify data to send to contract
-    const dataStr = JSON.stringify(data);
+    const dataStr = JSON.stringify(newData);
     const tldAddress = await domainFactory.tldNamesAddresses(tld);
     const domainContract = new ethers.Contract(tldAddress, domainAbi, signer);
     const edit = await domainContract.editData(domainName, dataStr);
+    const recipt = await edit.wait();
+    const hash = await recipt.hash;
   };
 
   return <div></div>;
