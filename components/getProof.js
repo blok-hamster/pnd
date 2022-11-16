@@ -63,6 +63,7 @@ export default function GetProof(tld) {
         console.log(err);
       });
 
+    // User can call this function once
     const { 0: randNumbers, 1: nullifier } = await sbtFactory.getRandNumber(
       requestId,
       domainName,
