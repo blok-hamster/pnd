@@ -15,13 +15,17 @@ export default function ProfileDetails(tld) {
   const [domainUri, setDomainUri] = useState(null);
   const [domainData, setDomainData] = useState(null);
 
+  const isBrowser = typeof window !== "undefined";
+
   const connectwalletHandler = () => {
-    if (window.Ethereum) {
-      provider.send("eth_requestAccounts", []).then(async () => {
-        await accountChangedHandler(provider.getSigner());
-      });
-    } else {
-      setErrorMessage("Please Install Metamask!!!");
+    if (isBrowser) {
+      if (window.Ethereum) {
+        provider.send("eth_requestAccounts", []).then(async () => {
+          await accountChangedHandler(provider.getSigner());
+        });
+      } else {
+        setErrorMessage("Please Install Metamask!!!");
+      }
     }
   };
 
@@ -69,7 +73,7 @@ export default function ProfileDetails(tld) {
     setDomainUri(result.image);
 
     //this returns a stringified version of the data stored on the domain
-    const domainData = await domainResolver.getDomainData(defaultDomain, tldl);
+    const domainData = await domainResolver.getDomainData(defaultDomain, tld);
     setDomainData(domainData);
   };
 

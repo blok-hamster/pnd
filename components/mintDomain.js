@@ -16,6 +16,7 @@ export default function MintDomains(tld) {
   const [userBalance, setUserBalance] = useState(null);
   const [sbtFactory, setSbtFactory] = useState(null);
   const [domainFactory, setDomainFactory] = useState(null);
+  const [tldPrice, setTldPrice] = useState(null);
   const [tlds, setTlds] = useState([]);
   const [sbtTlds, setSbtTlds] = useState([]);
 
@@ -36,12 +37,16 @@ export default function MintDomains(tld) {
       provider
     );
     setDomainFactory(newDomainFactory);
+    const tldAddress = await domainFactory.tldNamesAddresses(tld);
+    const tldContract = new ethers.Contract(tldAddress, domainAbi, provider);
+    const tldPrice = await tldContract.price();
+    setPrice(tldPrice);
 
-    const sbtAddresses = await newSbtFactory.getTldsArray().then((res) => {
+    await newSbtFactory.getTldsArray().then((res) => {
       setSbtTlds(res);
     });
 
-    const tldAddresses = await newDomainFactory.getTldsArray().then((res) => {
+    await newDomainFactory.getTldsArray().then((res) => {
       setTlds(res);
     });
   }, []);
@@ -76,8 +81,8 @@ export default function MintDomains(tld) {
   const mintSbtDomain = async (event) => {
     event.preventDeafult();
 
-    const name = event.target.name;
-    const soulWallet = event.target.soulWallet;
+    const name = event.target.name.value;
+    const soulWallet = event.target.soulWallet.value;
     const tldAddress = await sbtFactory.tldNamesAddresses(tld);
 
     const sbtDomainContract = new ethers.Contract(
@@ -85,7 +90,7 @@ export default function MintDomains(tld) {
       sbtDomainABi,
       signer
     );
-    const mint = await sbtDomainContract.mint(name, soulWallet);
+    const mint = await sbtDomainContract.mint(name, deafultAddress, soulWallet);
     const recipt = await mint.wait();
     const txHash = await recipt.hash;
   };

@@ -41,10 +41,10 @@ export default function CreateDomain() {
 
   const createSbtDomain = async (event) => {
     event.preventDeafult();
-    const tldName = event.target.tldName;
-    const symbol = event.target.symbol;
-    const price = event.target.price;
-    const buyingEnabled = event.target.buyingEnabled;
+    const tldName = event.target.tldName.value;
+    const symbol = event.target.symbol.value;
+    const price = event.target.price.value;
+    const buyingEnabled = event.target.buyingEnabled.value;
 
     const sbtFactory = new ethers.Contract(
       config.sbtFactoryAddress,
