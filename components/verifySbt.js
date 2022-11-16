@@ -1,40 +1,33 @@
 import axios from "axios";
+import { ethers } from "ethers";
 import { config } from "../constants/index";
-import sbtFactroyAbi from "../constants/sbtFactoryAbi";
+import sbtFactoryAbi from "../constants/sbtFactoryAbi";
 import sbtDomainAbi from "../constants/sbtDomainAbi";
 import { useState, useEffect } from "react";
 
 export default function VerifyProof(tld) {
-  const [deafultAddress, setDeafultAddress] = useState(null);
-  const [signer, setSigner] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [userBalance, setUserBalance] = useState(null);
+  const [provider, setProvider] = useState(null);
+  const [sbtFactory, setSbtFactory] = useState(null);
+  const [sbtTlds, setSbtTlds] = useState(null);
   const [verified, setVerified] = useState(null);
 
-  const connectwalletHandler = () => {
-    if (window.Ethereum) {
-      provider.send("eth_requestAccounts", []).then(async () => {
-        await accountChangedHandler(provider.getSigner());
-      });
-    } else {
-      setErrorMessage("Please Install Metamask!!!");
-    }
-  };
+  useEffect(async () => {
+    const provider = new ethers.providers.JsonRpcProvider(
+      process.env.POLYGON_MUMBAI_ENDPOINT
+    );
+    setProvider(provider);
 
-  // gets the default account, signer and balance
-  const accountChangedHandler = async (newAccount) => {
-    const address = await newAccount.getAddress();
-    setSigner(newAccount);
-    setDeafultAddress(address);
-    const balance = await newAccount.getBalance();
-    setUserBalance(ethers.utils.formatEther(balance));
-    await getuserBalance(address);
-  };
+    const newSbtFactory = new ethers.Contract(
+      config.sbtFactoryAddress,
+      sbtFactoryAbi,
+      provider
+    );
+    setSbtFactory(newSbtFactory);
 
-  //gets users eth balance
-  const getuserBalance = async (address) => {
-    const balance = await provider.getBalance(address, "latest");
-  };
+    await newSbtFactory.getTldsArray().then((res) => {
+      setSbtTlds(res);
+    });
+  }, []);
 
   const verifyZkProof = async (event) => {
     event.preventDeafult();
@@ -42,14 +35,8 @@ export default function VerifyProof(tld) {
     const proof = event.target.proof.value;
     const data = JSON.parse(proof);
 
-    const sbtFactory = new ethers.Contract(
-      config.sbtFactoryAddress,
-      sbtFactroyAbi,
-      signer
-    );
-
     const sbtAddress = await sbtFactory.tldNamesAddress(tld);
-    const sbtDomain = new ethers.Contract(sbtAddress, sbtDomainAbi, signer);
+    const sbtDomain = new ethers.Contract(sbtAddress, sbtDomainAbi, provider);
     const checkNullifier = await sbtDomain.nullifierExixt(data.nullifier);
 
     if (checkNullifier) {

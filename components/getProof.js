@@ -1,4 +1,5 @@
 import axios from "axios";
+import { ethers } from "ethers";
 import { config } from "../constants/index";
 import sbtFactroyAbi from "../constants/sbtFactoryAbi";
 import sbtDomainAbi from "../constants/sbtDomainAbi";
