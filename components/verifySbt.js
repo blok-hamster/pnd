@@ -41,7 +41,7 @@ export default function VerifyProof(tld) {
 
     if (checkNullifier) {
       response = await axios.post(
-        `https://localhost:5000/zk/verifyProof`,
+        `https://localhost:8080/zk/verifyProof`,
         data.proof,
         {
           headers: {
@@ -59,6 +59,4 @@ export default function VerifyProof(tld) {
       setVerified(false);
     }
   };
-
-  return <div></div>;
 }

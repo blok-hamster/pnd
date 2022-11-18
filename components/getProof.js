@@ -1,80 +1,81 @@
-import axios from "axios";
+import { useState, useEffect, useContext } from "react";
+import { DomainContext } from "../context/context";
+import { useAccount } from "wagmi";
 import { ethers } from "ethers";
-import { config } from "../constants/index";
-import sbtFactroyAbi from "../constants/sbtFactoryAbi";
-import sbtDomainAbi from "../constants/sbtDomainAbi";
-import randomNumberGenAbi from "../constants/randomNumberGenAbi";
-import { useState, useEffect } from "react";
+import sbtDomainAbi from "../constants/sbtDomainAbi.json";
+import sbtFactoryAbi from "../constants/sbtFactoryAbi.json";
+import { config } from "../constants";
 
-export default function GetProof(tld) {
-  const [deafultAddress, setDeafultAddress] = useState(null);
-  const [signer, setSigner] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [userBalance, setUserBalance] = useState(null);
-  const [requestId, setRequestId] = useState(null);
-  const [nullifier, setNullifier] = useState(null);
-  const [proof, setProof] = useState(null);
+const tld = ".picardy";
 
-  const connectwalletHandler = () => {
-    if (window.Ethereum) {
-      provider.send("eth_requestAccounts", []).then(async () => {
-        await accountChangedHandler(provider.getSigner());
-      });
+const GetProof = () => {
+  const { address } = useAccount();
+  const userDomainName = useContext(DomainContext);
+  const [requestId, setRequestId] = useState("");
+  const [nullifier, setNullifier] = useState("");
+  const [proof, setProof] = useState("");
+  const [sbtTld, setSbtTld] = useState("");
+  const [fulfilled, setFulfilled] = useState(false);
+  const [proofMessage, setProofMessage] = useState("");
+
+  const domainName = userDomainName.mintedName;
+
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+
+  const sbtFactory = new ethers.Contract(
+    config.sbtFactoryAddress,
+    sbtFactoryAbi,
+    signer
+  );
+
+  //This is used to request for a random number
+  const requestRandomNumber = async (e) => {
+    e.preventDefault();
+
+    const requestRandomTx = await sbtFactory.requestRandomNumber(3);
+    const requestRecipt = await requestRandomTx.wait();
+    const event = await requestRecipt.events.find(
+      (event) => event.event === "RequestSent"
+    );
+    const requestId = event.args.requestId;
+    setRequestId(requestId);
+  };
+
+  // simple calculation to get proof Input: TODO: update zk circuit
+  const circuitInput = (randNums) => {
+    let proofInput = [];
+    const num = randNums[0] + randNums[1] + randNums[2];
+    const sqr = num * num;
+    proofInput.push(num, sqr);
+    return { input: proofInput };
+  };
+
+  const confirmRandomNumber = async (e) => {
+    e.preventDefault();
+    if (!checkFulfilled(requestId)) {
+      console.log("not fulfilled");
     } else {
-      setErrorMessage("Please Install Metamask!!!");
+      const confirm = await sbtFactory.confirmRandNumber(
+        requestId,
+        domainName,
+        tld
+      );
+      const confirmRecipt = await confirm.wait();
     }
   };
 
-  // gets the default account, signer and balance
-  const accountChangedHandler = async (newAccount) => {
-    const address = await newAccount.getAddress();
-    setSigner(newAccount);
-    setDeafultAddress(address);
-    const balance = await newAccount.getBalance();
-    setUserBalance(ethers.utils.formatEther(balance));
-    await getuserBalance(address);
-  };
-
-  //gets users eth balance
-  const getuserBalance = async (address) => {
-    const balance = await provider.getBalance(address, "latest");
-  };
-
-  const getZkProof = async (event) => {
-    event.preventDeafult();
-
-    const domainName = event.target.domainName.value;
-    const sbtFactory = new ethers.Contract(
-      config.sbtFactoryAddress,
-      sbtFactroyAbi,
-      signer
-    );
-
-    //const sbtAddress = await sbtFactory.tldNamesAddress(tld);
-    //const sbtDomain = new ethers.Contract(sbtAddress, sbtDomainAbi, signer);
-
-    const requestRandomTx = await sbtFactory
-      .requestRandomNumber(3)
-      .then((res) => {
-        requestRandomTx.wait(2);
-        setRequestId(res);
-        console.log(requestRandomTx.transactionHash);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-
-    // User can call this function once
-    const { 0: randNumbers, 1: nullifier } = await sbtFactory.getRandNumber(
+  const getProof = async (e) => {
+    e.preventDefault();
+    const { 0: randomNumbers, 1: nullifier } = await sbtFactory.randDetails(
       requestId,
       domainName,
       tld
     );
-
     setNullifier(nullifier);
-    const body = circuitInput(randNumbers);
+    const body = circuitInput(randomNumbers);
     const response = await axios.post(
-      `https://localhost:5000/zk/generateProof`,
+      "http://localhost:8080/zk/generateProof",
       body,
       {
         headers: {
@@ -87,14 +88,17 @@ export default function GetProof(tld) {
     setProof(JSON.stringify(result));
   };
 
-  // simple calculation to get proof Input: TODO: update zk circuit
-  const circuitInput = (randNums) => {
-    let proofInput = [];
-    const num = randNumbers[1] + randNumbers[2] + randNumbers[3];
-    const sqr = num * num;
-    proofInput.push(num, sqr);
-    return { input: proofInput };
+  //this checks that the random request Has been fulfilled
+  const checkFulfilled = async (e) => {
+    e.preventDefault();
+    setFulfilled[await sbtFactory.checkFulfilled(requestId)];
   };
 
-  return <div></div>;
-}
+  return (
+    <div>
+      <h1>Hello Get</h1>
+    </div>
+  );
+};
+
+export default GetProof;
