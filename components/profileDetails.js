@@ -11,13 +11,8 @@ export default function ProfileDetails() {
   const [signer, setSigner] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [userBalance, setUserBalance] = useState(null);
-  //const [defaultDomain, setDeafultDomain] = useState(null);
-  //const [domainUri, setDomainUri] = useState(null);
-  const [domainData, setDomainData] = useState(null);
   const [sbtDomains, setSbtDomains] = useState([]);
   const [domains, setDeafultDomains] = useState([]);
-  const [domainUris, setDomainUris] = useState([]);
-  const [sbtDomainsUri, setSbtDomainUris] = useState([]);
 
   const isBrowser = typeof window !== "undefined";
 
@@ -59,6 +54,7 @@ export default function ProfileDetails() {
     signer
   );
 
+  // gets all domains and their uri
   const getDomainProfileDetails = async (event) => {
     event.preventDeafult();
 
@@ -66,17 +62,14 @@ export default function ProfileDetails() {
     const defaultDomain = await domainResolver.getDefaultDomains(
       deafultAddress
     );
-    const defaultDomainarr = defaultDomain.split(" ");
-    const domainDetails = await getDeafultDomains(defaultDomainarr);
-    setDeafultDomains(domainDetails);
+    const defaultDomainArr = defaultDomain.split(" ");
+    const domainDetails = await getDeafultDomains(defaultDomainArr);
 
-    await getDomainUri(domainDetails);
-
-    //this returns a stringified version of the data stored on the domain
-    const domainData = await domainResolver.getDomainData(defaultDomain, tld);
-    setDomainData(domainData);
+    const domainUriArr = await getDomainUri(domainDetails);
+    setDeafultDomains(domainUriArr);
   };
 
+  // gets all sbt domains and their uri
   const getSbtProfileDetails = async (event) => {
     event.preventDeafult();
 
@@ -86,9 +79,10 @@ export default function ProfileDetails() {
     );
     const defaultSbtDomainsArr = deafultSbtDomains.split(" ");
     const sbtDomainDetails = await getDeafultDomains(defaultSbtDomainsArr);
-    setSbtDomains(sbtDomainDetails);
+    //setSbtDomains(sbtDomainDetails);
 
-    await getSbtDomainUri(sbtDomainDetails);
+    const domainUriArr = await getSbtDomainUri(sbtDomainDetails);
+    setSbtDomains(domainUriArr);
   };
 
   // converts the array of string to an array of objects containing the domain name and tld
@@ -114,21 +108,31 @@ export default function ProfileDetails() {
 
   //this function get the images of all domains
   const getDomainUri = async (domainDetailsArr) => {
-    let domainUris = [];
+    let domainDetails = [];
     for (i = 0; i < domainDetailsArr.length; i++) {
-      const domainDetails = domainDetailsArr[i];
+      let newDomainDetails = {
+        domainName: "",
+        tld: "",
+        image: "",
+      };
+      const domainDetail = domainDetailsArr[i];
 
       //this is where the image is gotten from
       const domainUri = await domainResolver.getDomainTokenUri(
-        domainDetails.domainName,
-        domainDetails.tld
+        domainDetail.domainName,
+        domainDetail.tld
       );
       const domainImage = window.atob(domainUri.substring(29));
       const result = JSON.parse(domainImage);
-      domainUris.push(result.image);
+
+      newDomainDetails.domainName = domainDetail.domainName;
+      newDomainDetails.tld = domainDetail.tld;
+      newDomainDetails.image = result.image;
+
+      domainDetails.push(newDomainDetails);
     }
 
-    return domainUris;
+    return domainDetails;
   };
 
   //this function get the images of all domains
