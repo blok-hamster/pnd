@@ -137,7 +137,7 @@ export default function ProfileDetails() {
 
   //this function get the images of all domains
   const getSbtDomainUri = async (domainDetailsArr) => {
-    let domainUris = [];
+    let domainDetails = [];
     for (i = 0; i < domainDetailsArr.length; i++) {
       const domainDetails = domainDetailsArr[i];
 
@@ -148,10 +148,10 @@ export default function ProfileDetails() {
       );
       const domainImage = window.atob(domainUri.substring(29));
       const result = JSON.parse(domainImage);
-      domainUris.push(result.image);
+      domainDetails.push(result.image);
     }
 
-    return domainUris;
+    return domainDetails;
   };
 
   //edit domains
