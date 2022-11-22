@@ -6,14 +6,18 @@ import sbtResolverAbi from "../constants/sbtResolver.json";
 import dotenv from "dotenv";
 dotenv.config();
 
-export default function ProfileDetails(tld) {
+export default function ProfileDetails() {
   const [deafultAddress, setDeafultAddress] = useState(null);
   const [signer, setSigner] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [userBalance, setUserBalance] = useState(null);
-  const [defaultDomain, setDeafultDomain] = useState(null);
-  const [domainUri, setDomainUri] = useState(null);
+  //const [defaultDomain, setDeafultDomain] = useState(null);
+  //const [domainUri, setDomainUri] = useState(null);
   const [domainData, setDomainData] = useState(null);
+  const [sbtDomains, setSbtDomains] = useState([]);
+  const [domains, setDeafultDomains] = useState([]);
+  const [domainUris, setDomainUris] = useState([]);
+  const [sbtDomainsUri, setSbtDomainUris] = useState([]);
 
   const isBrowser = typeof window !== "undefined";
 
@@ -55,26 +59,95 @@ export default function ProfileDetails(tld) {
     signer
   );
 
-  const getProfileDetails = async (event) => {
+  const getDomainProfileDetails = async (event) => {
     event.preventDeafult();
-    //deafult domain
-    const defaultDomain = await domainResolver.getDefaultDomain(
-      deafultAddress,
-      tld
+
+    // Returns an array of domain names an address has
+    const defaultDomain = await domainResolver.getDefaultDomains(
+      deafultAddress
     );
-    setDeafultDomain(defaultDomain);
-    //this is where the image is gotten from
-    const domainUri = await domainResolver.getDomainTokenUri(
-      defaultDomain,
-      tld
-    );
-    const domainImage = window.atob(domainUri.substring(29));
-    const result = JSON.parse(domainImage);
-    setDomainUri(result.image);
+    const defaultDomainarr = defaultDomain.split(" ");
+    const domainDetails = await getDeafultDomains(defaultDomainarr);
+    setDeafultDomains(domainDetails);
+
+    await getDomainUri(domainDetails);
 
     //this returns a stringified version of the data stored on the domain
     const domainData = await domainResolver.getDomainData(defaultDomain, tld);
     setDomainData(domainData);
+  };
+
+  const getSbtProfileDetails = async (event) => {
+    event.preventDeafult();
+
+    // Returns an array of SBT domain names an address has
+    const deafultSbtDomains = await sbtResolver.getDefaultDomains(
+      deafultAddress
+    );
+    const defaultSbtDomainsArr = deafultSbtDomains.split(" ");
+    const sbtDomainDetails = await getDeafultDomains(defaultSbtDomainsArr);
+    setSbtDomains(sbtDomainDetails);
+
+    await getSbtDomainUri(sbtDomainDetails);
+  };
+
+  // converts the array of string to an array of objects containing the domain name and tld
+  const getDeafultDomains = async (deafultDomains) => {
+    let domainDetailsArr = [];
+    for (i = 0; i < deafultDomains.length; i++) {
+      let domainDetails = {
+        domainName: "",
+        tld: "",
+      };
+      const domain = deafultDomains[i];
+      const splitArr = domain.split(".");
+      const domainName = splitArr[0];
+      const tld = "." + splitArr[1];
+
+      domainDetails.domainName = domainName;
+      domainDetails.tld = tld;
+      domainDetailsArr.push(domainDetails);
+    }
+
+    return domainDetailsArr;
+  };
+
+  //this function get the images of all domains
+  const getDomainUri = async (domainDetailsArr) => {
+    let domainUris = [];
+    for (i = 0; i < domainDetailsArr.length; i++) {
+      const domainDetails = domainDetailsArr[i];
+
+      //this is where the image is gotten from
+      const domainUri = await domainResolver.getDomainTokenUri(
+        domainDetails.domainName,
+        domainDetails.tld
+      );
+      const domainImage = window.atob(domainUri.substring(29));
+      const result = JSON.parse(domainImage);
+      domainUris.push(result.image);
+    }
+
+    return domainUris;
+  };
+
+  //this function get the images of all domains
+  const getSbtDomainUri = async (domainDetailsArr) => {
+    let domainUris = [];
+    for (i = 0; i < domainDetailsArr.length; i++) {
+      const domainDetails = domainDetailsArr[i];
+
+      //this is where the image is gotten from
+      const domainUri = await sbtResolver.getDomainTokenUri(
+        domainDetails.domainName,
+        domainDetails.tld
+      );
+      const domainImage = window.atob(domainUri.substring(29));
+      const result = JSON.parse(domainImage);
+      domainUris.push(result.image);
+    }
+
+    return domainUris;
   };
 
   //edit domains
